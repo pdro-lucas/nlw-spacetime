@@ -1,9 +1,13 @@
+import { PrismaClient } from '@prisma/client'
 import fastify from 'fastify'
+
+const Prisma = new PrismaClient()
 
 const app = fastify()
 
 app.get('/', async (request, reply) => {
-  return { hello: 'world' }
+  const user = await Prisma.user.findMany()
+  return { user }
 })
 
 app.listen({ port: 3333 }).then(() => {
