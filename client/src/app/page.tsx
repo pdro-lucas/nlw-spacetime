@@ -1,10 +1,5 @@
-import Button from '@/components/Button'
-
 export default function Home() {
   return (
-    <>
-      <h1>Hello World</h1>
-      <Button />
-    </>
+    <div className="h-screen text-2xl text-white bg-zinc-900">Helloooooooo</div>
   )
 }
