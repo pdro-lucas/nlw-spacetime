@@ -1,10 +1,17 @@
 import { FastifyInstance } from "fastify";
 import z from "zod";
-import { Prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma";
 
 export async function memoriesRoutes(app: FastifyInstance) {
+  app.addHook("preHandler", async (request) => {
+    await request.jwtVerify();
+  });
+
   app.get("/memories", async (request, reply) => {
-    const memories = await Prisma.memory.findMany({
+    const memories = await prisma.memory.findMany({
+      where: {
+        userId: request.user.sub,
+      },
       orderBy: {
         createdAt: "asc",
       },
@@ -26,11 +33,17 @@ export async function memoriesRoutes(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params);
 
-    const memory = await Prisma.memory.findUniqueOrThrow({
+    const memory = await prisma.memory.findUniqueOrThrow({
       where: {
         id,
       },
     });
+
+    if (!memory.isPublic && memory.userId !== request.user.sub) {
+      return reply.status(403).send({
+        error: "You do not have permission to view this memory.",
+      });
+    }
 
     return memory;
   });
@@ -44,12 +57,12 @@ export async function memoriesRoutes(app: FastifyInstance) {
 
     const { content, coverUrl, isPublic } = bodySchema.parse(request.body);
 
-    const memory = await Prisma.memory.create({
+    const memory = await prisma.memory.create({
       data: {
         content,
         coverUrl,
         isPublic,
-        userId: "39791ca9-d9ca-4e92-87ca-8569929705cb",
+        userId: request.user.sub,
       },
     });
 
@@ -71,7 +84,19 @@ export async function memoriesRoutes(app: FastifyInstance) {
 
     const { content, coverUrl, isPublic } = bodySchema.parse(request.body);
 
-    const memory = await Prisma.memory.update({
+    let memory = await prisma.memory.findUniqueOrThrow({
+      where: {
+        id,
+      },
+    });
+
+    if (memory.userId !== request.user.sub) {
+      return reply.status(403).send({
+        error: "You do not have permission to edit this memory.",
+      });
+    }
+
+    memory = await prisma.memory.update({
       where: {
         id,
       },
@@ -79,7 +104,7 @@ export async function memoriesRoutes(app: FastifyInstance) {
         content,
         coverUrl,
         isPublic,
-        userId: "39791ca9-d9ca-4e92-87ca-8569929705cb",
+        userId: request.user.sub,
       },
     });
 
@@ -93,7 +118,19 @@ export async function memoriesRoutes(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params);
 
-    await Prisma.memory.delete({
+    const memory = await prisma.memory.findUniqueOrThrow({
+      where: {
+        id,
+      },
+    });
+
+    if (memory.userId !== request.user.sub) {
+      return reply.status(403).send({
+        error: "You do not have permission to edit this memory.",
+      });
+    }
+
+    await prisma.memory.delete({
       where: {
         id,
       },
