@@ -1,10 +1,8 @@
 {
-  "extends":[
-    "@rocketseat/eslint-config/react"
-  ],
+  "extends": ["@rocketseat/eslint-config/react"],
   "rules": {
-    "prettier/prettier": {
-      "semi": true
+    // Disable prettier because it's not working with prettier extension
+    "prettier/prettier": "off",
+    "camelcase": "off"
     }
-  }
 }
